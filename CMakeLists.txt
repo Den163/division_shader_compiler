@@ -4,8 +4,6 @@ project(division_shader_compiler LANGUAGES CXX)
 include(FetchContent)
 include(GenerateExportHeader)
 
-option(DIVISION_SHADER_COMPILER_EXECUTABLE "Build library or executable" OFF)
-
 set(CMAKE_CXX_STANDARD 17)
 
 if(NOT DIVISION_SHADER_COMPILER_EXECUTABLE)
