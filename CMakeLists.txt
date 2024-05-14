@@ -42,9 +42,14 @@ target_link_libraries(
         glslang SPIRV glslang-default-resource-limits spirv-cross-cpp spirv-cross-msl)
 
 target_link_directories(division_shader_compiler PUBLIC ${PROJECT_BINARY_DIR})
-GENERATE_EXPORT_HEADER(division_shader_compiler EXPORT_MACRO_NAME DIVISION_EXPORT)
 
 if(NOT DIVISION_SHADER_COMPILER_EXECUTABLE)
+        GENERATE_EXPORT_HEADER(division_shader_compiler EXPORT_MACRO_NAME DIVISION_EXPORT)
         install(TARGETS division_shader_compiler DESTINATION ${CMAKE_INSTALL_NAME_DIR})
+else()
+        file(
+                WRITE 
+                "${CMAKE_CURRENT_BINARY_DIR}/division_shader_compiler_export.h" 
+                "#pragma once\n#define DIVISION_EXPORT"
+        )
 endif()
-

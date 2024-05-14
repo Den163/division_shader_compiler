@@ -21,7 +21,7 @@ bool division_shader_compiler_alloc(DivisionShaderCompilerContext** ctx)
     );
     if (context == nullptr)
     {
-        fprintf(stderr, "Failed to alloc shader compiler context");
+        printf("Failed to alloc shader compiler context");
         return false;
     }
 
@@ -30,7 +30,7 @@ bool division_shader_compiler_alloc(DivisionShaderCompilerContext** ctx)
 
     if (context->spirv_buffer == nullptr || context->output_src_buffer == nullptr)
     {
-        fprintf(stderr, "Failed to allocate shader compiler buffers");
+        printf("Failed to allocate shader compiler buffers");
         free(context);
         return false;
     }
@@ -40,7 +40,7 @@ bool division_shader_compiler_alloc(DivisionShaderCompilerContext** ctx)
 
     if (!glslang::InitializeProcess())
     {
-        fprintf(stderr, "Failed to init glslang");
+        printf("Failed to init glslang");
         free(context);
         return false;
     }
@@ -73,7 +73,7 @@ bool division_shader_compiler_compile_glsl_to_spirv(
     }
     catch (std::runtime_error& e)
     {
-        fprintf(stderr, "%s\n", e.what());
+        printf("%s\n", e.what());
         return false;
     }
 
@@ -105,7 +105,7 @@ bool division_shader_compiler_compile_glsl_to_spirv(
     if (!shader.parse(default_resource, 450, false, EShMessages::EShMsgDefault))
     {
         const char* info_log = shader.getInfoLog();
-        fprintf(stderr, "Failed to parse a shader. Log: %s\n", info_log);
+        printf("Failed to parse a shader. Log: %s\n", info_log);
         return false;
     }
 
@@ -114,7 +114,7 @@ bool division_shader_compiler_compile_glsl_to_spirv(
     if (!program.link(EShMessages::EShMsgDefault))
     {
         const char* info_log = program.getInfoLog();
-        fprintf(stderr, "Failed to link a program. Log: %s\n", info_log);
+        printf("Failed to link a program. Log: %s\n", info_log);
         return false;
     }
 
@@ -150,7 +150,7 @@ bool division_shader_compiler_compile_glsl_to_spirv(
 
         if (ctx->spirv_buffer == nullptr)
         {
-            fprintf(stderr, "Failed to realloc shader compiler buffer");
+            printf("Failed to realloc shader compiler buffer");
             return false;
         }
     }
@@ -196,7 +196,7 @@ bool division_shader_compiler_compile_spirv_to_metal(
 
             if (ctx->output_src_buffer == nullptr)
             {
-                fprintf(stderr, "Failed to realloc shader compiler buffer");
+                printf("Failed to realloc shader compiler buffer");
                 return false;
             }
         }
@@ -207,7 +207,7 @@ bool division_shader_compiler_compile_spirv_to_metal(
     }
     catch (std::runtime_error& e)
     {
-        fprintf(stderr, "Error while compiling spirv to msl: %s\n", e.what());
+        printf("Error while compiling spirv to msl: %s\n", e.what());
         return false;
     }
 }

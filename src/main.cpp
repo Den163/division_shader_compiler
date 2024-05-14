@@ -1,9 +1,11 @@
 #include "division_shader_compiler/interface.h"
 
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <ios>
 #include <iostream>
+#include <sstream>
 #include <string>
 
 struct ContextOwner
@@ -24,16 +26,13 @@ read_file_to_str(const std::filesystem::path& input_path, std::string& output_st
     std::ifstream input_file { input_path };
     if (!input_file.is_open())
     {
-        std::cerr << "Can't open file: '" << input_path << "'" << std::endl;
+        std::cout << "Can't open file: '" << input_path << "'" << std::endl;
         return false;
     }
 
-    output_string.clear();
-    std::string l;
-    while (std::getline(input_file, l))
-    {
-        output_string += l;
-    }
+    std::stringstream read_buffer;
+    read_buffer << input_file.rdbuf();
+    output_string = read_buffer.str();
 
     return true;
 }
@@ -44,7 +43,7 @@ static bool write_file_from_str(
 )
 {
     std::ofstream output_file { output_path };
-    if (output_file.is_open())
+    if (!output_file.is_open())
     {
         std::cout << "Can't create/open file '" << output_path << "'" << std::endl;
         return false;
@@ -61,7 +60,7 @@ int main(int argc, char** argv)
 
     if (argc != 4)
     {
-        std::cerr << "Wrong arguments. "
+        std::cout << "Wrong arguments. "
                   << "Usage: >division_shader_compiler <--vertex|--fragment> "
                   << "<input shader path> "
                   << "<output shader path>" << std::endl;
@@ -72,19 +71,20 @@ int main(int argc, char** argv)
     DivisionCompilerShaderType shader_type;
     std::string msl_entry_point;
 
-    if (shader_type_str == "vertex")
+    if (shader_type_str == "--vertex")
     {
         shader_type = DIVISION_COMPILER_SHADER_TYPE_VERTEX;
         msl_entry_point = "vert";
     }
-    else if (shader_type_str == "fragment")
+    else if (shader_type_str == "--fragment")
     {
         shader_type = DIVISION_COMPILER_SHADER_TYPE_FRAGMENT;
         msl_entry_point = "frag";
     }
     else
     {
-        std::cerr << "The first (shader type) argument must be '--vertex' or '--fragment'"
+        std::cout << "The first (shader type) argument must be '--vertex' or '--fragment'"
+                  << " but actual is: '" << shader_type_str << "'"
                   << std::endl;
         return -1;
     }
@@ -94,14 +94,14 @@ int main(int argc, char** argv)
 
     if (!exists(input_path))
     {
-        std::cerr << "Input file does not exist" << std::endl;
+        std::cout << "Input file does not exist" << std::endl;
         return -1;
     }
 
     ContextOwner ctx_owner {};
 
     std::string input_source {};
-    if (read_file_to_str(input_path, input_source))
+    if (!read_file_to_str(input_path, input_source))
     {
         return -1;
     }
@@ -110,13 +110,13 @@ int main(int argc, char** argv)
     if (!division_shader_compiler_compile_glsl_to_spirv(
             ctx_owner.ctx_ptr,
             input_source.data(),
-            input_source.size(),
-            DIVISION_COMPILER_SHADER_TYPE_FRAGMENT,
+            static_cast<int32_t>(input_source.size()),
+            shader_type,
             msl_entry_point.data(),
             &spirv_bye_count
         ))
     {
-        std::cerr << "Failed to compile glsl from file '" << input_path << "' to spirv"
+        std::cout << "Failed to compile glsl from file '" << input_path << "' to spirv"
                   << std::endl;
         return -1;
     }
@@ -131,18 +131,20 @@ int main(int argc, char** argv)
             &out_msl_size
         ))
     {
-        std::cerr << "Failed to compile spirv to metal (source glsl file: '" << input_path
+        std::cout << "Failed to compile spirv to metal (source glsl file: '" << input_path
                   << "')" << std::endl;
         return -1;
     }
 
-    write_file_from_str(
+    if (!write_file_from_str(
         output_path,
         std::string {
             ctx_owner.ctx_ptr->output_src_buffer,
             ctx_owner.ctx_ptr->output_src_buffer_size,
         }
-    );
+    )) {
+        return -1;
+    }
 
     return 0;
 }
